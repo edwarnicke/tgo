@@ -1,5 +1,18 @@
 tgo (prononuced 'to go') is a transparent drop in **wrapper** around go that allows for easy fast docker containers to be built in a go repo.
 
+Try it now:
+
+```dockerfile
+FROM ${baseimg}
+RUN go get github.com/edwarnicke/tgo/cmd/tgo
+RUN tgo build -o . ./...
+```
+
+```bash
+go get github.com/edwarnicke/tgo/cmd/tgo
+tgo docker build .
+```
+
 # The Problem
 
 Both go and docker have marvelous developer usability.  When used together, there are a few rough spots.
