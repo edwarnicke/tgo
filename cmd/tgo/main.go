@@ -37,7 +37,7 @@ func main() {
 		case "clean":
 			exitOnErr(cache.RunArgs("go", os.Args[1:]...))
 			if len(os.Args) == 2 {
-				cache.Clean()
+				exitOnErr(cache.Clean())
 			}
 		default:
 			exitOnErr(cache.Run("go build ./..."))
