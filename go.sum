@@ -20,8 +20,8 @@ github.com/davecgh/go-spew v1.1.1 h1:vj9j/u1bqnvCEfJOwUhtlOARqs3+rkHYY13jYWTU97c
 github.com/davecgh/go-spew v1.1.1/go.mod h1:J7Y8YcW2NihsgmVo/mv3lAwl/skON4iLHjSsI+c5H38=
 github.com/dgrijalva/jwt-go v3.2.0+incompatible/go.mod h1:E3ru+11k8xSBh+hMPgOLZmtrrCbhqsmaPHjLKYnJCaQ=
 github.com/dgryski/go-sip13 v0.0.0-20181026042036-e10d5fee7954/go.mod h1:vAd38F8PWV+bWy6jNmig1y/TA+kYO4g3RSRF0IAv0no=
-github.com/edwarnicke/copy v0.0.0-20200504031029-b06f632098c9 h1:CzSWrVe9Ta/wpRge25WfoJKxRRtX52zIMVuTor+WJaw=
-github.com/edwarnicke/copy v0.0.0-20200504031029-b06f632098c9/go.mod h1:6DR4lODPX6rgu7uJ6/0hNEYajXRWDNPLrIlnwmxycic=
+github.com/edwarnicke/copy v0.0.0-20200505132322-ebd96176299c h1:rW3yzHnxFuA639FhkayF8Es86yubHG05bgf/+YyDqAE=
+github.com/edwarnicke/copy v0.0.0-20200505132322-ebd96176299c/go.mod h1:nKTKLboSXHzmSgA85GU56HlYr+X/zO2W8rf2TY0Nh9I=
 github.com/edwarnicke/exechelper v0.0.0-20200430204640-b9b180ed8623 h1:pyMvWZyD9PtMioa1U+Gf+jL0k7m0cigKo7+eGV7FRb4=
 github.com/edwarnicke/exechelper v0.0.0-20200430204640-b9b180ed8623/go.mod h1:/T271jtNX/ND4De6pa2aRy2+8sNtyCDB1A2pp4M+fUs=
 github.com/fsnotify/fsnotify v1.4.7 h1:IXs+QLmnXW2CcXuY+8Mzv/fWEsPGWxqefPtCP5CnV9I=
@@ -112,6 +112,7 @@ github.com/spf13/viper v1.6.3/go.mod h1:jUMtyi0/lB5yZH/FjyGAoH7IMNrIhlBf6pXZmbMD
 github.com/stretchr/objx v0.1.0/go.mod h1:HFkY916IF+rwdDfMAkV7OtwuqBVzrE8GR6GFx+wExME=
 github.com/stretchr/objx v0.1.1/go.mod h1:HFkY916IF+rwdDfMAkV7OtwuqBVzrE8GR6GFx+wExME=
 github.com/stretchr/testify v1.2.2/go.mod h1:a8OnRcib4nhh0OaRAV+Yts87kKdq0PP7pXfy6kDkUVs=
+github.com/stretchr/testify v1.3.0 h1:TivCn/peBQ7UY8ooIcPgZFpTNSz0Q2U6UrFlUfqbe0Q=
 github.com/stretchr/testify v1.3.0/go.mod h1:M5WIy9Dh21IEIfnGCwXGc5bZfKNJtfHm1UVUgZn+9EI=
 github.com/stretchr/testify v1.5.1 h1:nOGnQDM7FYENwehXlg/kFVnos3rEvtKTjRvOWSzb6H4=
 github.com/stretchr/testify v1.5.1/go.mod h1:5W2xD1RspED5o8YsWQXVCued0rvSQ+mT+I5cxcmMvtA=

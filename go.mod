@@ -9,4 +9,4 @@ require (
 	github.com/spf13/viper v1.6.3
 )
 
-replace github.com/matthewrsj/copy => github.com/edwarnicke/copy v0.0.0-20200504031029-b06f632098c9
+replace github.com/matthewrsj/copy => github.com/edwarnicke/copy v0.0.0-20200505132322-ebd96176299c
