@@ -130,6 +130,26 @@ func (t *Tgo) Run(cmdString string, options ...*exechelper.Option) error {
 	return nil
 }
 
+func (t* Tgo) Clean() error {
+	if err := filepath.Walk(t.tGoDir, func(path string, info os.FileInfo, err error) error {
+		if err != nil {
+			return err
+		}
+		if info.Mode()&0200 == 0 {
+			if err:= os.Chmod(path,info.Mode()|0200);err != nil {
+				return err
+			}
+		}
+		return nil
+	});err != nil {
+		return err
+	}
+	if err := os.RemoveAll(t.tGoDir);err != nil {
+		return err
+	}
+	return nil
+}
+
 func (t *Tgo) tGoPath(path string) string {
 	return filepath.Join(t.tGoRoot, path)
 }

@@ -32,8 +32,13 @@ func main() {
 	cache := tgo.New(pwd)
 	if len(os.Args) > 1 {
 		switch os.Args[1] {
-		case "bug", "build", "clean", "doc", "env", "fix", "fmt", "generate", "get", "install", "list", "mod", "run", "test", "tool", "version", "vet", "help":
+		case "bug", "build", "doc", "env", "fix", "fmt", "generate", "get", "install", "list", "mod", "run", "test", "tool", "version", "vet", "help":
 			exitOnErr(cache.RunArgs("go", os.Args[1:]...))
+		case "clean":
+			exitOnErr(cache.RunArgs("go", os.Args[1:]...))
+			if len(os.Args) == 2 {
+				cache.Clean()
+			}
 		default:
 			exitOnErr(cache.Run("go build ./..."))
 			if _, err := exec.LookPath(os.Args[1]); err != nil {
@@ -43,6 +48,7 @@ func main() {
 		}
 	} else {
 		exitOnErr(cache.Run("go build ./..."))
+		exitOnErr(cache.Clean())
 	}
 }
 
