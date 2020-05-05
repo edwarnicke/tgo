@@ -91,17 +91,57 @@ tgo ${anything you would pass to go}
 
 will:
 
-1. Create (if it doesn't already exist) a .tgo directory in the current directory
-1. Create GOPATH and GOCACHE directories under .tgo as if they were relative to the hosts root directory
-  So if ```GOPATH=/home/bob/go``` and ```GOCACHE=/home/bob/go-build``` then tgo will create
-  ```/home/bob/git/foo/.tgo/root/home/bob/go``` and ```/home/bob/git/foo/.tgo/root/home/bob/go-build```
-1. Create a symlink from ```/home/bob/git/foo/.tgo/root/home/bob/git/foo/``` -> ```/home/bob/git/foo/```
-1. Hardlink (or failing that copy) any source dependencies on the local file system that are *not* in GOPATH or GOROOT.
-  This will scoop up any local source dependencies from replace directives.  So if the source code is in ```/home/bob/git/foo```
-  and the ```/home/bob/git/foo/go.mod``` has a ```replace github.com/bob/bar => ../bar``` replace directive, tgo will hardlink (or failing that copy)
-  the contents of ```/home/bob/git/bar``` to ```/home/bob/git/foo/.tgo/root/home/bob/git/bar```
-1. tgo notes the pkgdir (````/home/bob/git/foo````) gocache (```/home/bob/go-build```) and gopath (```/home/bob/go```) in ```.tgo/config```
-1. tgo then runs the requested go command with ```GOPATH=${PWD}/.tgo/root/home/bob/go```, ```GOCACHE=${PWD}/.tgo/root/home/bob/go-build```
-  ```PWD=${PWD}/.tgo/root/home/bob/git/foo/```
+Create (if it doesn't already exist) a .tgo directory in the current directory
+
+Create GOPATH and GOCACHE directories under .tgo as if they were relative to the hosts root directory
+
+So if 
+
+```GOPATH=/home/bob/go``` and ```GOCACHE=/home/bob/go-build``` 
+
+then tgo will create directories
+
+```/home/bob/git/foo/.tgo/root/home/bob/go``` and ```/home/bob/git/foo/.tgo/root/home/bob/go-build```
+
+Create a symlink from 
+
+```/home/bob/git/foo/.tgo/root/home/bob/git/foo/``` -> ```/home/bob/git/foo/```
+
+Hardlink (or failing that copy) any source dependencies on the local file system that are *not* in GOPATH or GOROOT.
+This will scoop up any local source dependencies from replace directives.  
+
+Example:
+
+So if the source code is in 
+
+```/home/bob/git/foo``` 
+
+and the 
+
+```/home/bob/git/foo/go.mod``` 
+
+has a 
+
+```replace github.com/bob/bar => ../bar``` 
+
+replace directive, tgo will hardlink (or failing that copy) the contents of 
+
+```/home/bob/git/bar``` 
+
+to 
+
+```/home/bob/git/foo/.tgo/root/home/bob/git/bar```
+
+tgo notes the pkgdir (````/home/bob/git/foo````) gocache (```/home/bob/go-build```) and gopath (```/home/bob/go```) in 
+
+```.tgo/config```
+
+tgo then runs the requested go command with 
+
+```GOPATH=${PWD}/.tgo/root/home/bob/go```
+
+```GOCACHE=${PWD}/.tgo/root/home/bob/go-build```
+
+```PWD=${PWD}/.tgo/root/home/bob/git/foo/```
 
 
