@@ -21,6 +21,8 @@ import (
 	"os"
 	"os/exec"
 
+	"github.com/edwarnicke/exechelper"
+
 	"github.com/edwarnicke/tgo"
 )
 
@@ -33,9 +35,9 @@ func main() {
 	if len(os.Args) > 1 {
 		switch os.Args[1] {
 		case "bug", "build", "doc", "env", "fix", "fmt", "generate", "get", "install", "list", "mod", "run", "test", "tool", "version", "vet", "help":
-			exitOnErr(cache.RunArgs("go", os.Args[1:]...))
+			exitOnErr(cache.Run("go", exechelper.WithArgs(os.Args[1:]...)))
 		case "clean":
-			exitOnErr(cache.RunArgs("go", os.Args[1:]...))
+			exitOnErr(cache.Run("go", exechelper.WithArgs(os.Args[1:]...)))
 			if len(os.Args) == 2 {
 				exitOnErr(cache.Clean())
 			}
@@ -44,7 +46,7 @@ func main() {
 			if _, err := exec.LookPath(os.Args[1]); err != nil {
 				os.Exit(1)
 			}
-			exitOnErr(cache.RunArgs(os.Args[1], os.Args[2:]...))
+			exitOnErr(cache.Run(os.Args[1], exechelper.WithArgs(os.Args[2:]...)))
 		}
 	} else {
 		exitOnErr(cache.Run("go build ./..."))
