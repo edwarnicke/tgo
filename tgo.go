@@ -22,7 +22,6 @@ import (
 	"fmt"
 	"io"
 	"os"
-	"os/exec"
 	"path/filepath"
 	"sort"
 	"strings"
@@ -93,24 +92,6 @@ func (t *Tgo) init() error {
 		}
 	})
 	return t.err
-}
-
-// RunArgs - run in the TGo cache in traditional exec args style
-func (t *Tgo) RunArgs(arg0 string, args ...string) error {
-	if err := t.init(); err != nil {
-		return err
-	}
-	// Falling back to using 'exec.Cmd' directly to make sure we are super precise about running what was asked for.
-	// splitting and rejoining *could* result in some divergence if exechelper were used, playing it safe
-	cmd := exec.Command(arg0, args...) // #nosec
-	cmd.Env = t.tGoEnv()
-	cmd.Stderr = os.Stderr
-	cmd.Stdout = os.Stdout
-	cmd.Stdin = os.Stdin
-	if err := cmd.Run(); err != nil {
-		return errors.Wrapf(err, "Error running %s %#v", arg0, args)
-	}
-	return nil
 }
 
 // Run - run in the TGo cache in exechelper style
