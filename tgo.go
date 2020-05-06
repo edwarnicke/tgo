@@ -33,9 +33,8 @@ import (
 )
 
 const (
-	pkgDirKey  = "pkgdir"
-	goCacheKey = "gocache"
-	goPathKey  = "gopath"
+	pkgDirKey = "pkgdir"
+	goPathKey = "gopath"
 )
 
 // Tgo provides a mechanism for building an indirectory go cache (source and binaries) transparently
@@ -68,7 +67,6 @@ func (t *Tgo) init() error {
 	t.once.Do(func() {
 		if !t.config.InConfig(pkgDirKey) {
 			t.config.Set(pkgDirKey, t.tGoParent)
-			t.config.Set(goCacheKey, t.goEnv["GOCACHE"])
 			t.config.Set(goPathKey, t.goEnv["GOPATH"])
 			if err := t.mkdirs(); err != nil {
 				t.err = err
@@ -138,9 +136,8 @@ func (t *Tgo) tGoPath(path string) string {
 
 func (t *Tgo) tGoEnv() []string {
 	replaceMap := map[string]string{
-		"GOPATH":  t.tGoPath(t.config.GetString(goPathKey)),
-		"GOCACHE": t.tGoPath(t.config.GetString(goCacheKey)),
-		"PWD":     t.tGoPath(t.config.GetString(pkgDirKey)),
+		"GOPATH": t.tGoPath(t.config.GetString(goPathKey)),
+		"PWD":    t.tGoPath(t.config.GetString(pkgDirKey)),
 	}
 	var envs []string
 	for _, env := range os.Environ() {
@@ -175,7 +172,7 @@ func (t *Tgo) getGoEnv() map[string]string {
 }
 
 func (t *Tgo) mkdirs() error {
-	for _, dir := range []string{filepath.Dir(t.config.GetString(pkgDirKey)), t.config.GetString(goCacheKey), t.config.GetString(goPathKey)} {
+	for _, dir := range []string{filepath.Dir(t.config.GetString(pkgDirKey)), t.config.GetString(goPathKey)} {
 		if err := os.MkdirAll(t.tGoPath(dir), 0750); err != nil {
 			return err
 		}
