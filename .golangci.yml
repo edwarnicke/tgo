@@ -157,7 +157,11 @@ issues:
   max-issues-per-linter: 0
   max-same-issues: 0
   exclude-rules:
-    - path: src/forwarder/main.go
+    - path: tgo.go
       linters:
-        - funlen
-      text: "Function 'main' is too long"
+        - gocyclo
+      text: 'sourceCopyWalkFunc'
+    - path: tgo.go
+      linters:
+        - govet
+      text: 'shadow: declaration of "err" shadows declaration at line'

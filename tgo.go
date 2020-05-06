@@ -20,6 +20,7 @@ package tgo
 
 import (
 	"fmt"
+	"io"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -28,7 +29,6 @@ import (
 	"sync"
 
 	"github.com/edwarnicke/exechelper"
-	"github.com/matthewrsj/copy"
 	"github.com/pkg/errors"
 	"github.com/spf13/viper"
 )
@@ -245,9 +245,58 @@ func (t *Tgo) linksource() error {
 		}
 		// Copy all other source code in
 		if dirPrefix == "" || !strings.HasPrefix(dir, dirPrefix) {
-			if err := copy.LinkOrCopy(dir, t.tGoPath(dir)); err != nil {
+			if err := filepath.Walk(dir, t.sourceCopyWalkFunc); err != nil {
 				return err
 			}
+		}
+	}
+	return nil
+}
+
+func (t *Tgo) sourceCopyWalkFunc(path string, info os.FileInfo, err error) error {
+	if err != nil {
+		return err
+	}
+	if strings.HasSuffix(path, ".tgo") || strings.HasSuffix(path, ".git") ||
+		strings.Contains(path, ".tgo"+string(os.PathSeparator)) || strings.Contains(path, ".git"+string(os.PathSeparator)) {
+		return nil
+	}
+	if info.IsDir() {
+		if err := os.MkdirAll(t.tGoPath(path), info.Mode()|0200); err != nil {
+			return err
+		}
+	}
+	if info.Mode().IsRegular() {
+		src, fileErr := os.Open(path) // #nosec
+		if fileErr != nil {
+			return err
+		}
+		defer func() { _ = src.Close() }()
+		if err := os.Remove(t.tGoPath(path)); err != nil && !os.IsNotExist(err) {
+			return err
+		}
+		dst, err := os.OpenFile(t.tGoPath(path), os.O_RDWR|os.O_CREATE, info.Mode()|0200)
+		if err != nil {
+			return err
+		}
+		defer func() { _ = dst.Close() }()
+		if _, err := io.Copy(dst, src); err != nil {
+			return err
+		}
+	}
+	if info.Mode()&os.ModeSymlink != 0 {
+		if err := os.Remove(t.tGoPath(path)); err != nil && !os.IsNotExist(err) {
+			return err
+		}
+		link, err := os.Readlink(path)
+		if err != nil {
+			return err
+		}
+		if err := os.Symlink(link, t.tGoPath(path)); err != nil {
+			return err
+		}
+		if err := os.Chmod(t.tGoPath(path), info.Mode()|0200); err != nil {
+			return err
 		}
 	}
 	return nil

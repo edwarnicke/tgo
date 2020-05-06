@@ -48,7 +48,6 @@ func main() {
 		}
 	} else {
 		exitOnErr(cache.Run("go build ./..."))
-		exitOnErr(cache.Clean())
 	}
 }
 
