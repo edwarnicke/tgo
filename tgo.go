@@ -98,10 +98,12 @@ func (t *Tgo) Run(cmdString string, options ...*exechelper.Option) error {
 		return err
 	}
 	options = append([]*exechelper.Option{
-		exechelper.WithEnvirons(t.tGoEnv()...),
+		exechelper.WithEnvirons(os.Environ()...),
 		exechelper.WithStdout(os.Stdout),
 		exechelper.WithStderr(os.Stderr),
 		exechelper.WithStdin(os.Stdin),
+		exechelper.WithEnvKV("GOPATH", t.tGoPath(t.config.GetString(goPathKey))),
+		exechelper.WithEnvKV("PWD", t.tGoPath(t.config.GetString(pkgDirKey))),
 	}, options...)
 	if err := exechelper.Run(cmdString, options...); err != nil {
 		return errors.Wrapf(err, "Error running %s", cmdString)
@@ -132,30 +134,6 @@ func (t *Tgo) Clean() error {
 
 func (t *Tgo) tGoPath(path string) string {
 	return filepath.Join(t.tGoRoot, path)
-}
-
-func (t *Tgo) tGoEnv() []string {
-	replaceMap := map[string]string{
-		"GOPATH": t.tGoPath(t.config.GetString(goPathKey)),
-		"PWD":    t.tGoPath(t.config.GetString(pkgDirKey)),
-	}
-	var envs []string
-	for _, env := range os.Environ() {
-		replaced := false
-		for key := range replaceMap {
-			if strings.HasPrefix(env, key+"=") {
-				replaced = true
-				break
-			}
-		}
-		if !replaced {
-			envs = append(envs, env)
-		}
-	}
-	for key, value := range replaceMap {
-		envs = append(envs, fmt.Sprintf("%s=%s", key, value))
-	}
-	return envs
 }
 
 func (t *Tgo) getGoEnv() map[string]string {
