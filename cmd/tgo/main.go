@@ -17,6 +17,7 @@
 package main
 
 import (
+	"fmt"
 	"log"
 	"os"
 	"os/exec"
@@ -55,7 +56,8 @@ func main() {
 
 func exitOnErr(err error) {
 	if exit, ok := err.(*exec.ExitError); ok {
-		log.Println(err)
+		fmt.Fprint(os.Stderr, exit.Stderr)
 		os.Exit(exit.ExitCode())
 	}
+	log.Println(err)
 }
