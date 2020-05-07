@@ -28,13 +28,13 @@ import (
 	"sync"
 
 	"github.com/edwarnicke/exechelper"
+	"github.com/joho/godotenv"
 	"github.com/pkg/errors"
-	"github.com/spf13/viper"
 )
 
 const (
-	pkgDirKey = "pkgdir"
-	goPathKey = "gopath"
+	pwdEnv    = "PWD"
+	goPathEnv = "GOPATH"
 )
 
 // Tgo provides a mechanism for building an indirectory go cache (source and binaries) transparently
@@ -43,7 +43,7 @@ type Tgo struct {
 	tGoParent string
 	tGoDir    string
 	tGoRoot   string
-	config    *viper.Viper
+	config    map[string]string
 	goEnv     map[string]string
 	once      sync.Once
 	err       error
@@ -55,19 +55,44 @@ func New(pwd string) *Tgo {
 		tGoParent: pwd,
 		tGoDir:    filepath.Join(pwd, ".tgo"),
 		tGoRoot:   filepath.Join(pwd, ".tgo", "root"),
-		config:    viper.New(),
+		config:    make(map[string]string),
 	}
-	t.config.SetConfigFile(filepath.Join(t.tGoDir, "config.yaml"))
-	_ = t.config.ReadInConfig()
-	t.goEnv = t.getGoEnv()
 	return t
 }
 
 func (t *Tgo) init() error {
 	t.once.Do(func() {
-		if !t.config.InConfig(pkgDirKey) {
-			t.config.Set(pkgDirKey, t.tGoParent)
-			t.config.Set(goPathKey, t.goEnv["GOPATH"])
+		// Read the config
+		config, err := godotenv.Read(filepath.Join(t.tGoDir, "env"))
+		if err == nil {
+			t.config = config
+		}
+		if err != nil && !os.IsNotExist(err) {
+			t.err = err
+			return
+		}
+
+		// Grab the go envs from go
+		output, err := exechelper.Output("go env", exechelper.WithEnvirons(os.Environ()...))
+		if err != nil {
+			t.err = err
+			return
+		}
+		env, err := godotenv.Unmarshal(string(output))
+		if err != nil {
+			t.err = err
+			return
+		}
+		t.goEnv = env
+
+		// Initialize .tgo if it didn't exist before
+		if _, ok := t.config[pwdEnv]; !ok {
+			t.config[pwdEnv] = t.tGoParent
+			t.config[goPathEnv] = t.goEnv[goPathEnv]
+			if err := t.Clean(); err != nil {
+				t.err = err
+				return
+			}
 			if err := t.mkdirs(); err != nil {
 				t.err = err
 				return
@@ -76,13 +101,13 @@ func (t *Tgo) init() error {
 				t.err = err
 				return
 			}
-			if err := t.config.WriteConfig(); err != nil {
+			if err := godotenv.Write(t.config, filepath.Join(t.tGoDir, "env")); err != nil {
 				t.err = err
 				return
 			}
 		}
 		// Load source
-		if t.config.GetString(pkgDirKey) == t.tGoParent {
+		if t.config[pwdEnv] == t.tGoParent {
 			if err := t.linksource(); err != nil {
 				t.err = err
 				return
@@ -102,8 +127,8 @@ func (t *Tgo) Run(cmdString string, options ...*exechelper.Option) error {
 		exechelper.WithStdout(os.Stdout),
 		exechelper.WithStderr(os.Stderr),
 		exechelper.WithStdin(os.Stdin),
-		exechelper.WithEnvKV("GOPATH", t.tGoPath(t.config.GetString(goPathKey))),
-		exechelper.WithEnvKV("PWD", t.tGoPath(t.config.GetString(pkgDirKey))),
+		exechelper.WithEnvKV(goPathEnv, t.tGoPath(t.config[goPathEnv])),
+		exechelper.WithEnvKV(pwdEnv, t.tGoPath(t.config[pwdEnv])),
 	}, options...)
 	if err := exechelper.Run(cmdString, options...); err != nil {
 		return errors.Wrapf(err, "Error running %s", cmdString)
@@ -136,21 +161,8 @@ func (t *Tgo) tGoPath(path string) string {
 	return filepath.Join(t.tGoRoot, path)
 }
 
-func (t *Tgo) getGoEnv() map[string]string {
-	// Grab the go envs from go
-	output, _ := exechelper.Output("go env", exechelper.WithEnvirons(os.Environ()...))
-	goEnv := make(map[string]string)
-	for _, line := range strings.Split(strings.TrimSpace(string(output)), "\n") {
-		split := strings.Split(line, "=")
-		if len(split) == 2 {
-			goEnv[split[0]] = strings.Trim(split[1], `"`)
-		}
-	}
-	return goEnv
-}
-
 func (t *Tgo) mkdirs() error {
-	for _, dir := range []string{filepath.Dir(t.config.GetString(pkgDirKey)), t.config.GetString(goPathKey)} {
+	for _, dir := range []string{filepath.Dir(t.config[pwdEnv]), t.config[goPathEnv]} {
 		if err := os.MkdirAll(t.tGoPath(dir), 0750); err != nil {
 			return err
 		}
@@ -196,7 +208,7 @@ func (t *Tgo) linksource() error {
 	var dirPrefix string
 	for _, dir := range dirs {
 		// Leave GOROOT and GOPATH out of this... GOPATH can be reconstructed from within the Tgo directory
-		if strings.HasPrefix(dir, t.goEnv["GOROOT"]) || strings.HasPrefix(dir, t.goEnv["GOPATH"]) || strings.HasPrefix(dir, t.tGoParent) {
+		if strings.HasPrefix(dir, t.goEnv["GOROOT"]) || strings.HasPrefix(dir, t.goEnv[goPathEnv]) || strings.HasPrefix(dir, t.tGoParent) {
 			continue
 		}
 		// Copy all other source code in

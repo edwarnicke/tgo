@@ -136,7 +136,7 @@ to
 
 tgo notes the pkgdir (````/home/bob/git/foo````) and gopath (```/home/bob/go```) in 
 
-```.tgo/config```
+```.tgo/env```
 
 tgo runs the requested go command with 
 

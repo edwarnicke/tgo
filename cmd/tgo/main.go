@@ -59,5 +59,7 @@ func exitOnErr(err error) {
 		fmt.Fprint(os.Stderr, exit.Stderr)
 		os.Exit(exit.ExitCode())
 	}
-	log.Println(err)
+	if err != nil {
+		log.Println(err)
+	}
 }
