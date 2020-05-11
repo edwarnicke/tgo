@@ -19,7 +19,6 @@
 package tgo
 
 import (
-	"fmt"
 	"io"
 	"os"
 	"path/filepath"
@@ -89,7 +88,7 @@ func (t *Tgo) init() error {
 		if _, ok := t.config[pwdEnv]; !ok {
 			t.config[pwdEnv] = t.tGoParent
 			t.config[goPathEnv] = t.goEnv[goPathEnv]
-			if err := t.Clean(); err != nil {
+			if err := t.Clean(); err != nil && !os.IsNotExist(err) {
 				t.err = err
 				return
 			}
@@ -108,7 +107,7 @@ func (t *Tgo) init() error {
 		}
 		// Load source
 		if t.config[pwdEnv] == t.tGoParent {
-			if err := t.linksource(); err != nil {
+			if err := t.copysource(); err != nil {
 				t.err = err
 				return
 			}
@@ -189,14 +188,14 @@ func (t *Tgo) mksymlink() error {
 	return nil
 }
 
-func (t *Tgo) linksource() error {
+func (t *Tgo) copysource() error {
 	// Cache the source and binaries
 	options := []*exechelper.Option{
 		exechelper.WithEnvirons(os.Environ()...),
 		exechelper.WithStderr(os.Stderr),
 	}
 	// Get all the package depended no in tgoParent
-	output, err := exechelper.Output(fmt.Sprintf("go list -f {{.Dir}} all ./..."), options...)
+	output, err := exechelper.Output(`go list -f '{{if .Module}}{{printf "%s\n%s" .Dir .Module.GoMod }}{{else}}{{.Dir}}{{end}}' all ./...`, options...)
 	if err != nil {
 		return err
 	}
@@ -228,6 +227,10 @@ func (t *Tgo) sourceCopyWalkFunc(path string, info os.FileInfo, err error) error
 	if strings.HasSuffix(path, ".tgo") || strings.HasSuffix(path, ".git") ||
 		strings.Contains(path, ".tgo"+string(os.PathSeparator)) || strings.Contains(path, ".git"+string(os.PathSeparator)) {
 		return nil
+	}
+
+	if err := os.MkdirAll(filepath.Dir(t.tGoPath(path)), 0700); err != nil {
+		return err
 	}
 	if info.IsDir() {
 		if err := os.MkdirAll(t.tGoPath(path), info.Mode()|0200); err != nil {
