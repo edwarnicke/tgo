@@ -88,10 +88,6 @@ func (t *Tgo) init() error {
 		if _, ok := t.config[pwdEnv]; !ok {
 			t.config[pwdEnv] = t.tGoParent
 			t.config[goPathEnv] = t.goEnv[goPathEnv]
-			if err := t.Clean(); err != nil && !os.IsNotExist(err) {
-				t.err = err
-				return
-			}
 			if err := t.mkdirs(); err != nil {
 				t.err = err
 				return
@@ -137,7 +133,14 @@ func (t *Tgo) Run(cmdString string, options ...*exechelper.Option) error {
 
 // Clean - removes the .tgo directory
 func (t *Tgo) Clean() error {
-	if err := filepath.Walk(t.tGoDir, func(path string, info os.FileInfo, err error) error {
+	return t.clean(t.tGoDir)
+}
+
+func (t *Tgo) clean(dir string) error {
+	if !strings.HasPrefix(dir, t.tGoDir) {
+		return errors.Errorf("Cannot clean %q as it is not under %q", dir, t.tGoRoot)
+	}
+	if err := filepath.Walk(dir, func(path string, info os.FileInfo, err error) error {
 		if err != nil {
 			return err
 		}
@@ -150,7 +153,7 @@ func (t *Tgo) Clean() error {
 	}); err != nil {
 		return err
 	}
-	if err := os.RemoveAll(t.tGoDir); err != nil {
+	if err := os.RemoveAll(dir); err != nil {
 		return err
 	}
 	return nil
@@ -212,9 +215,13 @@ func (t *Tgo) copysource() error {
 		}
 		// Copy all other source code in
 		if dirPrefix == "" || !strings.HasPrefix(dir, dirPrefix) {
+			if err := t.clean(t.tGoPath(dir)); err != nil && !os.IsNotExist(err) {
+				return err
+			}
 			if err := filepath.Walk(dir, t.sourceCopyWalkFunc); err != nil {
 				return err
 			}
+			dirPrefix = dir
 		}
 	}
 	return nil
@@ -243,9 +250,7 @@ func (t *Tgo) sourceCopyWalkFunc(path string, info os.FileInfo, err error) error
 			return err
 		}
 		defer func() { _ = src.Close() }()
-		if err := os.Remove(t.tGoPath(path)); err != nil && !os.IsNotExist(err) {
-			return err
-		}
+
 		dst, err := os.OpenFile(t.tGoPath(path), os.O_RDWR|os.O_CREATE, info.Mode()|0200)
 		if err != nil {
 			return err
@@ -256,9 +261,6 @@ func (t *Tgo) sourceCopyWalkFunc(path string, info os.FileInfo, err error) error
 		}
 	}
 	if info.Mode()&os.ModeSymlink != 0 {
-		if err := os.Remove(t.tGoPath(path)); err != nil && !os.IsNotExist(err) {
-			return err
-		}
 		link, err := os.Readlink(path)
 		if err != nil {
 			return err
