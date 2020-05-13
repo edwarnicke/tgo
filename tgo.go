@@ -32,9 +32,9 @@ import (
 )
 
 const (
-	pwdEnv    = "PWD"
-	goPathEnv = "GOPATH"
-	goRootEnv = "GOROOT"
+	pwdEnv     = "PWD"
+	goPathEnv  = "GOPATH"
+	goCacheEnv = "GOCACHE"
 )
 
 // Tgo provides a mechanism for building an indirectory go cache (source and binaries) transparently
@@ -89,7 +89,7 @@ func (t *Tgo) init() error {
 		if _, ok := t.config[pwdEnv]; !ok {
 			t.config[pwdEnv] = t.tGoParent
 			t.config[goPathEnv] = t.goEnv[goPathEnv]
-			t.config[goRootEnv] = t.goEnv[goRootEnv]
+			t.config[goCacheEnv] = t.goEnv[goCacheEnv]
 			if err := t.mkdirs(); err != nil {
 				t.err = err
 				return
@@ -129,7 +129,7 @@ func (t *Tgo) Run(cmdString string, options ...*exechelper.Option) error {
 	}
 	// If we are not where the source cache was built, cache the binary objects to for later recovery
 	if t.config[pwdEnv] != t.tGoParent {
-		stdenv = append(stdenv, exechelper.WithEnvKV(goRootEnv, t.tGoPath(t.config[goRootEnv])))
+		stdenv = append(stdenv, exechelper.WithEnvKV(goCacheEnv, t.tGoPath(t.config[goCacheEnv])))
 	}
 	options = append(stdenv, options...)
 	if err := exechelper.Run(cmdString, options...); err != nil {
@@ -171,7 +171,7 @@ func (t *Tgo) tGoPath(path string) string {
 }
 
 func (t *Tgo) mkdirs() error {
-	for _, dir := range []string{filepath.Dir(t.config[pwdEnv]), t.config[goPathEnv], t.config[goRootEnv]} {
+	for _, dir := range []string{filepath.Dir(t.config[pwdEnv]), t.config[goPathEnv], t.config[goCacheEnv]} {
 		if err := os.MkdirAll(t.tGoPath(dir), 0750); err != nil {
 			return err
 		}
@@ -217,7 +217,7 @@ func (t *Tgo) copysource() error {
 	var dirPrefix string
 	for _, dir := range dirs {
 		// Leave GOROOT and GOPATH out of this... GOPATH can be reconstructed from within the Tgo directory
-		if strings.HasPrefix(dir, t.goEnv[goRootEnv]) || strings.HasPrefix(dir, t.goEnv[goPathEnv]) || strings.HasPrefix(dir, t.tGoParent) {
+		if strings.HasPrefix(dir, t.goEnv[goCacheEnv]) || strings.HasPrefix(dir, t.goEnv[goPathEnv]) || strings.HasPrefix(dir, t.tGoParent) {
 			continue
 		}
 		// Copy all other source code in
