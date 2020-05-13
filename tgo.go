@@ -171,7 +171,7 @@ func (t *Tgo) tGoPath(path string) string {
 }
 
 func (t *Tgo) mkdirs() error {
-	for _, dir := range []string{filepath.Dir(t.config[pwdEnv]), t.config[goPathEnv]} {
+	for _, dir := range []string{filepath.Dir(t.config[pwdEnv]), t.config[goPathEnv], t.config[goRootEnv]} {
 		if err := os.MkdirAll(t.tGoPath(dir), 0750); err != nil {
 			return err
 		}
