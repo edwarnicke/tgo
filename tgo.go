@@ -217,7 +217,7 @@ func (t *Tgo) copysource() error {
 	var dirPrefix string
 	for _, dir := range dirs {
 		// Leave GOROOT and GOPATH out of this... GOPATH can be reconstructed from within the Tgo directory
-		if strings.HasPrefix(dir, t.goEnv[goCacheEnv]) || strings.HasPrefix(dir, t.goEnv[goPathEnv]) || strings.HasPrefix(dir, t.tGoParent) {
+		if strings.HasPrefix(dir, t.goEnv["GOROOT"]) || strings.HasPrefix(dir, t.goEnv[goPathEnv]) || strings.HasPrefix(dir, t.tGoParent) {
 			continue
 		}
 		// Copy all other source code in
