@@ -34,6 +34,7 @@ import (
 const (
 	pwdEnv    = "PWD"
 	goPathEnv = "GOPATH"
+	goRootEnv = "GOROOT"
 )
 
 // Tgo provides a mechanism for building an indirectory go cache (source and binaries) transparently
@@ -88,6 +89,7 @@ func (t *Tgo) init() error {
 		if _, ok := t.config[pwdEnv]; !ok {
 			t.config[pwdEnv] = t.tGoParent
 			t.config[goPathEnv] = t.goEnv[goPathEnv]
+			t.config[goRootEnv] = t.goEnv[goRootEnv]
 			if err := t.mkdirs(); err != nil {
 				t.err = err
 				return
@@ -117,14 +119,19 @@ func (t *Tgo) Run(cmdString string, options ...*exechelper.Option) error {
 	if err := t.init(); err != nil {
 		return err
 	}
-	options = append([]*exechelper.Option{
+	stdenv := []*exechelper.Option{
 		exechelper.WithEnvirons(os.Environ()...),
 		exechelper.WithStdout(os.Stdout),
 		exechelper.WithStderr(os.Stderr),
 		exechelper.WithStdin(os.Stdin),
 		exechelper.WithEnvKV(goPathEnv, t.tGoPath(t.config[goPathEnv])),
 		exechelper.WithEnvKV(pwdEnv, t.tGoPath(t.config[pwdEnv])),
-	}, options...)
+	}
+	// If we are not where the source cache was built, cache the binary objects to for later recovery
+	if t.config[pwdEnv] != t.tGoParent {
+		stdenv = append(stdenv, exechelper.WithEnvKV(goRootEnv, t.tGoPath(t.config[goRootEnv])))
+	}
+	options = append(stdenv, options...)
 	if err := exechelper.Run(cmdString, options...); err != nil {
 		return errors.Wrapf(err, "Error running %s", cmdString)
 	}
@@ -210,7 +217,7 @@ func (t *Tgo) copysource() error {
 	var dirPrefix string
 	for _, dir := range dirs {
 		// Leave GOROOT and GOPATH out of this... GOPATH can be reconstructed from within the Tgo directory
-		if strings.HasPrefix(dir, t.goEnv["GOROOT"]) || strings.HasPrefix(dir, t.goEnv[goPathEnv]) || strings.HasPrefix(dir, t.tGoParent) {
+		if strings.HasPrefix(dir, t.goEnv[goRootEnv]) || strings.HasPrefix(dir, t.goEnv[goPathEnv]) || strings.HasPrefix(dir, t.tGoParent) {
 			continue
 		}
 		// Copy all other source code in
